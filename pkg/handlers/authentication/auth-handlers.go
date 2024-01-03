@@ -3,6 +3,7 @@ package auth
 import (
 	"context"
 	"encoding/json"
+	"log"
 	"net/http"
 	"time"
 
@@ -18,6 +19,7 @@ func (s *AuthServer) SignupHandler(w http.ResponseWriter, r *http.Request) {
 	var user dbmodels.User
 	decoder := json.NewDecoder(r.Body)
 	if err := decoder.Decode(&user); err != nil {
+		log.Println("unable to decode req:", err.Error())
 		common.RespondWithError(w, http.StatusBadRequest, "Invalid request payload")
 		return
 	}
@@ -25,6 +27,7 @@ func (s *AuthServer) SignupHandler(w http.ResponseWriter, r *http.Request) {
 
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
 	if err != nil {
+		log.Println("unable to generate hash for password:", err.Error())
 		common.RespondWithError(w, http.StatusInternalServerError, "Error hashing password")
 		return
 	}
@@ -52,18 +55,21 @@ func (s *AuthServer) LoginHandler(w http.ResponseWriter, r *http.Request) {
 	var user dbmodels.User
 	result := s.db.Where("username = ?", credentials.Username).First(&user)
 	if result.Error != nil {
-		common.RespondWithError(w, http.StatusUnauthorized, "Invalid username or password")
+		log.Println("unable to fetch user:", result.Error.Error())
+		common.RespondWithError(w, http.StatusUnauthorized, "Username not exist")
 		return
 	}
 
 	err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(credentials.Password))
 	if err != nil {
-		common.RespondWithError(w, http.StatusUnauthorized, "Invalid username or password")
+		log.Println("unabel to compate hash and password:", err.Error())
+		common.RespondWithError(w, http.StatusUnauthorized, "Incorrect password")
 		return
 	}
 
 	token, err := generateJWTToken(user.ID)
 	if err != nil {
+		log.Println("unable to generate JWT Token:", err.Error())
 		common.RespondWithError(w, http.StatusInternalServerError, "Error generating JWT token")
 		return
 	}
@@ -94,6 +100,7 @@ func AuthenticateMiddleware(next http.Handler) http.Handler {
 			return JWTSecret, nil
 		})
 		if err != nil || !token.Valid {
+			log.Println("user not authorised:", err.Error())
 			common.RespondWithError(w, http.StatusUnauthorized, "Unauthorized")
 			return
 		}

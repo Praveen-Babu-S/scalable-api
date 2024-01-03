@@ -21,14 +21,16 @@ func StartApiHandler(serverPort string, authServer *auth.AuthServer, noteServer 
 	router.HandleFunc("/api/auth/login", authServer.LoginHandler).Methods("POST")
 
 	// Note Api Endpoints
-	router.HandleFunc("/api/notes", noteServer.GetNotesHandler).Methods("GET")
-	router.HandleFunc("/api/notes/{id}", noteServer.GetNoteByIDHandler).Methods("GET")
-	router.HandleFunc("/api/notes", noteServer.CreateNoteHandler).Methods("POST")
-	router.HandleFunc("/api/notes/{id}", noteServer.UpdateNoteHandler).Methods("PUT")
-	router.HandleFunc("/api/notes/{id}", noteServer.DeleteNoteHandler).Methods("DELETE")
+	noteRouter := router.PathPrefix("/api/notes").Subrouter()
+	noteRouter.Use(auth.AuthenticateMiddleware)
+	router.HandleFunc("", noteServer.GetNotesHandler).Methods("GET")
+	router.HandleFunc("/{id}", noteServer.GetNoteByIDHandler).Methods("GET")
+	router.HandleFunc("", noteServer.CreateNoteHandler).Methods("POST")
+	router.HandleFunc("/{id}", noteServer.UpdateNoteHandler).Methods("PUT")
+	router.HandleFunc("/{id}", noteServer.DeleteNoteHandler).Methods("DELETE")
 
 	// Share Api Endpoint
-	router.HandleFunc("/api/notes/{id}/share", shareServer.ShareNoteHandler).Methods("POST")
+	router.HandleFunc("/{id}/share", shareServer.ShareNoteHandler).Methods("POST")
 
 	// Search Endpoint
 	router.HandleFunc("/api/search", searchServer.SearchNotesHandler).Methods("GET")

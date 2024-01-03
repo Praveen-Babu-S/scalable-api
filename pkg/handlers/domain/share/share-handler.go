@@ -2,6 +2,7 @@ package share
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 	"strconv"
 	"time"
@@ -21,6 +22,7 @@ func (s *ShareServer) ShareNoteHandler(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	noteID, err := strconv.Atoi(params["id"])
 	if err != nil {
+		log.Println("invalid note ID:", err.Error())
 		common.RespondWithError(w, http.StatusBadRequest, "Invalid note ID")
 		return
 	}
@@ -48,6 +50,7 @@ func (s *ShareServer) ShareNoteHandler(w http.ResponseWriter, r *http.Request) {
 	var recipientUser dbmodels.User
 	result = s.db.Where("username = ?", shareRequest.RecipientUsername).First(&recipientUser)
 	if result.Error != nil {
+		log.Println("unable to fetch user:", err.Error())
 		common.RespondWithError(w, http.StatusNotFound, "Recipient user not found")
 		return
 	}

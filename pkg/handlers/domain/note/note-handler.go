@@ -2,6 +2,7 @@ package note
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 	"strconv"
 
@@ -19,7 +20,12 @@ func (s *NoteServer) GetNotesHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var notes []dbmodels.Note
-	s.db.Where("user_id = ?", userID).Find(&notes)
+	if err := s.db.Where("user_id = ?", userID).Find(&notes).Error; err != nil {
+		log.Println("unable to fetch user details:", err.Error())
+	}
+	if len(notes) == 0 {
+		common.RespondWithJSON(w, http.StatusOK, "notes list is empty!")
+	}
 	common.RespondWithJSON(w, http.StatusOK, notes)
 }
 
@@ -34,6 +40,7 @@ func (s *NoteServer) GetNoteByIDHandler(w http.ResponseWriter, r *http.Request) 
 	params := mux.Vars(r)
 	noteID, err := strconv.Atoi(params["id"])
 	if err != nil {
+		log.Println("invalid nodeID:", err.Error())
 		common.RespondWithError(w, http.StatusBadRequest, "Invalid note ID")
 		return
 	}
@@ -41,6 +48,7 @@ func (s *NoteServer) GetNoteByIDHandler(w http.ResponseWriter, r *http.Request) 
 	var note dbmodels.Note
 	result := s.db.Where("id = ? AND user_id = ?", noteID, userID).First(&note)
 	if result.Error != nil {
+		log.Println("unable to fetch note details:", err.Error())
 		common.RespondWithError(w, http.StatusNotFound, "Note not found")
 		return
 	}
@@ -65,7 +73,11 @@ func (s *NoteServer) CreateNoteHandler(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 
 	note.UserID = userID
-	s.db.Create(&note)
+	if err := s.db.Create(&note).Error; err != nil {
+		log.Println("unable to create note:", err.Error())
+		common.RespondWithError(w, http.StatusBadRequest, "Failed to create note")
+		return
+	}
 
 	common.RespondWithJSON(w, http.StatusCreated, note)
 }
@@ -79,6 +91,7 @@ func (s *NoteServer) UpdateNoteHandler(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	noteID, err := strconv.Atoi(params["id"])
 	if err != nil {
+		log.Println("invalid nodeID:", err.Error())
 		common.RespondWithError(w, http.StatusBadRequest, "Invalid note ID")
 		return
 	}
@@ -86,6 +99,7 @@ func (s *NoteServer) UpdateNoteHandler(w http.ResponseWriter, r *http.Request) {
 	var updatedNote dbmodels.Note
 	decoder := json.NewDecoder(r.Body)
 	if err := decoder.Decode(&updatedNote); err != nil {
+		log.Println("unable to update note:", err.Error())
 		common.RespondWithError(w, http.StatusBadRequest, "Invalid request payload")
 		return
 	}
@@ -95,6 +109,7 @@ func (s *NoteServer) UpdateNoteHandler(w http.ResponseWriter, r *http.Request) {
 	var existingNote dbmodels.Note
 	result := s.db.Where("id = ? AND user_id = ?", noteID, userID).First(&existingNote)
 	if result.Error != nil {
+		log.Println("unable to fetch note:", err.Error())
 		common.RespondWithError(w, http.StatusNotFound, "Note not found")
 		return
 	}
@@ -102,7 +117,11 @@ func (s *NoteServer) UpdateNoteHandler(w http.ResponseWriter, r *http.Request) {
 	// Update the note
 	existingNote.Title = updatedNote.Title
 	existingNote.Content = updatedNote.Content
-	s.db.Save(&existingNote)
+	if err := s.db.Save(&existingNote).Error; err != nil {
+		log.Println("unable to update note:", err.Error())
+		common.RespondWithError(w, http.StatusBadRequest, "Failed to update note")
+		return
+	}
 
 	common.RespondWithJSON(w, http.StatusOK, existingNote)
 }
