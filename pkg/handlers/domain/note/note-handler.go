@@ -1,20 +1,9 @@
-package domain
+package note
 
-import (
-	"log"
+import "net/http"
 
-	"github.com/jinzhu/gorm"
-)
-
-type CRUDServer struct {
-	db *gorm.DB
-}
-
-func NewAuthImplementor(db *gorm.DB) *CRUDServer {
-	if db == nil {
-		log.Fatalln("Invalid DB object, db is nil")
-	}
-	return &CRUDServer{
-		db: db,
-	}
-}
+func (s *NoteServer) GetNotesHandler(w http.ResponseWriter, r *http.Request)    {}
+func (s *NoteServer) GetNoteByIDHandler(w http.ResponseWriter, r *http.Request) {}
+func (s *NoteServer) CreateNoteHandler(w http.ResponseWriter, r *http.Request)  {}
+func (s *NoteServer) UpdateNoteHandler(w http.ResponseWriter, r *http.Request)  {}
+func (s *NoteServer) DeleteNoteHandler(w http.ResponseWriter, r *http.Request)  {}
