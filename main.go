@@ -38,10 +38,6 @@ func main() {
 	// // Initialize Gorilla Mux router
 	// r := mux.NewRouter()
 
-	// // Authentication Endpoints
-	// r.HandleFunc("/api/auth/signup", SignupHandler).Methods("POST")
-	// r.HandleFunc("/api/auth/login", LoginHandler).Methods("POST")
-
 	// // Note Endpoints
 	// r.HandleFunc("/api/notes", GetNotesHandler).Methods("GET")
 	// r.HandleFunc("/api/notes/{id}", GetNoteByIDHandler).Methods("GET")
@@ -56,16 +52,6 @@ func main() {
 	// // Start the server
 	// log.Fatal(http.ListenAndServe(":8080", r))
 }
-
-// // SignupHandler handles user registration.
-// func SignupHandler(w http.ResponseWriter, r *http.Request) {
-// 	// Implement user registration logic and store user in the database
-// }
-
-// // LoginHandler handles user login.
-// func LoginHandler(w http.ResponseWriter, r *http.Request) {
-// 	// Implement user login logic and issue an access token
-// }
 
 // // GetNotesHandler gets a list of all notes for the authenticated user.
 // func GetNotesHandler(w http.ResponseWriter, r *http.Request) {
@@ -100,17 +86,4 @@ func main() {
 // // SearchNotesHandler searches for notes based on keywords for the authenticated user.
 // func SearchNotesHandler(w http.ResponseWriter, r *http.Request) {
 // 	// Implement logic to search for notes based on keywords for the authenticated user
-// }
-
-// // Helper function to respond with JSON
-// func respondWithJSON(w http.ResponseWriter, code int, payload interface{}) {
-// 	response, err := json.Marshal(payload)
-// 	if err != nil {
-// 		w.WriteHeader(http.StatusInternalServerError)
-// 		w.Write([]byte("Internal Server Error"))
-// 		return
-// 	}
-// 	w.Header().Set("Content-Type", "application/json")
-// 	w.WriteHeader(code)
-// 	w.Write(response)
 // }
