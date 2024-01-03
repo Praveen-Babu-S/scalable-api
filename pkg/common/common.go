@@ -1,6 +1,7 @@
 package common
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 )
@@ -21,4 +22,9 @@ func RespondWithJSON(w http.ResponseWriter, code int, payload interface{}) {
 // Helper function to respond with an error message
 func RespondWithError(w http.ResponseWriter, code int, message string) {
 	RespondWithJSON(w, code, map[string]string{"error": message})
+}
+
+func GetUserIDFromContext(ctx context.Context) uint {
+	userID, _ := ctx.Value("user_id").(uint)
+	return userID
 }

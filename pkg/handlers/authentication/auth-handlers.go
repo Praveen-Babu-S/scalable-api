@@ -82,7 +82,7 @@ func generateJWTToken(userID uint) (string, error) {
 }
 
 // Middleware to authenticate requests using JWT token
-func authenticateMiddleware(next http.Handler) http.Handler {
+func AuthenticateMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		tokenString := r.Header.Get("Authorization")
 		if tokenString == "" {
