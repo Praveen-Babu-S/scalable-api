@@ -8,4 +8,5 @@ import (
 // One time migrations to arrange required schema
 func RunMigrations(db *gorm.DB) {
 	db.AutoMigrate(&dbmodels.User{}, &dbmodels.Note{}, &dbmodels.SharedNote{})
+	db.Debug().Model(&dbmodels.Note{}).AddForeignKey("user_id", "users(id)", "CASCADE", "CASCADE")
 }

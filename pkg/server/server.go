@@ -5,6 +5,7 @@ import (
 
 	"github.com/Praveen-Babu-S/scalable-api/models/config"
 	"github.com/Praveen-Babu-S/scalable-api/pkg/db/connect"
+	"github.com/Praveen-Babu-S/scalable-api/pkg/db/migrations"
 	auth "github.com/Praveen-Babu-S/scalable-api/pkg/handlers/authentication"
 	"github.com/Praveen-Babu-S/scalable-api/pkg/handlers/domain/note"
 	"github.com/Praveen-Babu-S/scalable-api/pkg/handlers/domain/search"
@@ -23,7 +24,7 @@ func StartServer(serverConfig config.ServerConfig) {
 	db := connect.DBConnectionClient(serverConfig.PostgresConfig)
 
 	// Run one time migrations to create required schema
-	// migrations.RunMigrations(db)
+	migrations.RunMigrations(db)
 
 	// Initialise handlers
 	authServer := auth.NewAuthImplementor(db)
