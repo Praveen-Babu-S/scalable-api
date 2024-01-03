@@ -17,19 +17,23 @@ func main() {
 	dbHost := flag.String("dbHost", "localhost", "hostname on which db service is hosted")
 	dbPort := flag.String("dbPort", "5432", "application db port")
 	dbName := flag.String("dbName", "postgres", "application db name")
+	serverPort := flag.String("serverPort", "9000", "application server port")
 
 	flag.Parse()
 
-	postgresConfig := config.PostgresConfig{
-		Host:       *dbHost,
-		Port:       *dbPort,
-		DbName:     *dbName,
-		DbUser:     dbUsername,
-		DbPassword: dbPassword,
+	serverConfig := config.ServerConfig{
+		PostgresConfig: config.PostgresConfig{
+			Host:       *dbHost,
+			Port:       *dbPort,
+			DbName:     *dbName,
+			DbUser:     dbUsername,
+			DbPassword: dbPassword,
+		},
+		ServerPort: *serverPort,
 	}
 
 	// Start server with the given configuration
-	server.StartServer(postgresConfig)
+	server.StartServer(serverConfig)
 
 	// // Initialize Gorilla Mux router
 	// r := mux.NewRouter()
