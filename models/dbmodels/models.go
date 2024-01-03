@@ -1,6 +1,6 @@
-package models
+package dbmodels
 
-import "gorm.io/gorm"
+import "github.com/jinzhu/gorm"
 
 // Note represents a note model.
 type Note struct {
