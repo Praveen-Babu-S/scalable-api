@@ -2,6 +2,7 @@ package note
 
 import (
 	"log"
+	"log/slog"
 	"net/http"
 
 	"github.com/jinzhu/gorm"
@@ -16,14 +17,16 @@ type NoteImplementor interface {
 }
 
 type NoteServer struct {
-	db *gorm.DB
+	db     *gorm.DB
+	logger *slog.Logger
 }
 
-func NewNoteImplementor(db *gorm.DB) *NoteServer {
+func NewNoteImplementor(db *gorm.DB, logger *slog.Logger) *NoteServer {
 	if db == nil {
 		log.Fatalln("Invalid DB object, db is nil")
 	}
 	return &NoteServer{
-		db: db,
+		db:     db,
+		logger: logger,
 	}
 }

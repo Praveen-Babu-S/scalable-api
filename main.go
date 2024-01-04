@@ -5,6 +5,7 @@ import (
 
 	"github.com/Praveen-Babu-S/scalable-api/models/config"
 	"github.com/Praveen-Babu-S/scalable-api/pkg/server"
+	"github.com/Praveen-Babu-S/scalable-api/utils/logger"
 )
 
 const (
@@ -21,6 +22,9 @@ func main() {
 
 	flag.Parse()
 
+	// Create logger instance for structured logging
+	logger := logger.CreateLogger()
+
 	serverConfig := config.ServerConfig{
 		PostgresConfig: config.PostgresConfig{
 			Host:       *dbHost,
@@ -30,6 +34,7 @@ func main() {
 			DbPassword: dbPassword,
 		},
 		ServerPort: *serverPort,
+		Logger:     logger,
 	}
 
 	// Start server with the given configuration

@@ -2,7 +2,6 @@ package http
 
 import (
 	"fmt"
-	"log"
 	"net/http"
 
 	auth "github.com/Praveen-Babu-S/scalable-api/pkg/handlers/authentication"
@@ -22,7 +21,7 @@ func StartApiHandler(serverPort string, authServer *auth.AuthServer, noteServer 
 
 	// Note Api Endpoints
 	noteRouter := router.PathPrefix("/api/notes").Subrouter()
-	noteRouter.Use(auth.AuthenticateMiddleware)
+	noteRouter.Use(authServer.AuthenticateMiddleware)
 	router.HandleFunc("", noteServer.GetNotesHandler).Methods("GET")
 	router.HandleFunc("/{id}", noteServer.GetNoteByIDHandler).Methods("GET")
 	router.HandleFunc("", noteServer.CreateNoteHandler).Methods("POST")
@@ -35,5 +34,7 @@ func StartApiHandler(serverPort string, authServer *auth.AuthServer, noteServer 
 	// Search Endpoint
 	router.HandleFunc("/api/search", searchServer.SearchNotesHandler).Methods("GET")
 
-	log.Fatal(http.ListenAndServe(fmt.Sprint(":"+serverPort), router))
+	if err := http.ListenAndServe(fmt.Sprint(":"+serverPort), router); err != nil {
+		panic("failed to start server:" + err.Error())
+	}
 }

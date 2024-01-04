@@ -1,7 +1,7 @@
 package auth
 
 import (
-	"log"
+	"log/slog"
 	"net/http"
 
 	"github.com/jinzhu/gorm"
@@ -10,17 +10,20 @@ import (
 type AuthImplementor interface {
 	SignupHandler(w http.ResponseWriter, r *http.Request)
 	LoginHandler(w http.ResponseWriter, r *http.Request)
+	AuthenticateMiddleware(next http.Handler) http.Handler
 }
 
 type AuthServer struct {
-	db *gorm.DB
+	db     *gorm.DB
+	logger *slog.Logger
 }
 
-func NewAuthImplementor(db *gorm.DB) *AuthServer {
+func NewAuthImplementor(db *gorm.DB, logger *slog.Logger) *AuthServer {
 	if db == nil {
-		log.Fatalln("Invalid DB object, db is nil")
+		logger.Error("Invalid DB object, db is nil")
 	}
 	return &AuthServer{
-		db: db,
+		db:     db,
+		logger: logger,
 	}
 }

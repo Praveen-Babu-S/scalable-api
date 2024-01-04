@@ -15,17 +15,20 @@ import (
 func (s *NoteServer) GetNotesHandler(w http.ResponseWriter, r *http.Request) {
 	userID := common.GetUserIDFromContext(r.Context())
 	if userID == 0 {
+		s.logger.Info("unauthorised access to GETNotes", "userId", userID)
 		common.RespondWithError(w, http.StatusUnauthorized, "Unauthorized")
 		return
 	}
 
 	var notes []dbmodels.Note
-	if err := s.db.Where("user_id = ?", userID).Find(&notes).Error; err != nil {
-		log.Println("unable to fetch user details:", err.Error())
+	if err := s.db.Debug().Where("user_id = ?", userID).Find(&notes).Error; err != nil {
+		s.logger.Debug("unable to fetch notes list", "err", err.Error(), "userId", userID)
 	}
 	if len(notes) == 0 {
+		s.logger.Debug("empty notes list found", "userId", userID)
 		common.RespondWithJSON(w, http.StatusOK, "notes list is empty!")
 	}
+	s.logger.Info("fetched notes list", "notesList", notes, "userId", userID)
 	common.RespondWithJSON(w, http.StatusOK, notes)
 }
 
@@ -33,6 +36,7 @@ func (s *NoteServer) GetNotesHandler(w http.ResponseWriter, r *http.Request) {
 func (s *NoteServer) GetNoteByIDHandler(w http.ResponseWriter, r *http.Request) {
 	userID := common.GetUserIDFromContext(r.Context())
 	if userID == 0 {
+		s.logger.Info("unauthorised access to GETNotesById", "userId", userID)
 		common.RespondWithError(w, http.StatusUnauthorized, "Unauthorized")
 		return
 	}
@@ -40,19 +44,19 @@ func (s *NoteServer) GetNoteByIDHandler(w http.ResponseWriter, r *http.Request) 
 	params := mux.Vars(r)
 	noteID, err := strconv.Atoi(params["id"])
 	if err != nil {
-		log.Println("invalid nodeID:", err.Error())
-		common.RespondWithError(w, http.StatusBadRequest, "Invalid note ID")
+		s.logger.Debug("invalid nodeID", "userId", userID, "noteId", noteID)
+		common.RespondWithError(w, http.StatusBadRequest, "Invalid noteID")
 		return
 	}
 
 	var note dbmodels.Note
 	result := s.db.Where("id = ? AND user_id = ?", noteID, userID).First(&note)
 	if result.Error != nil {
-		log.Println("unable to fetch note details:", err.Error())
+		s.logger.Debug("unabel to fetch note", "userId", userID, "noteId", noteID, "err", result.Error.Error())
 		common.RespondWithError(w, http.StatusNotFound, "Note not found")
 		return
 	}
-
+	s.logger.Info("fetched notes list by id", "note", note, "userId", userID)
 	common.RespondWithJSON(w, http.StatusOK, note)
 }
 
@@ -60,6 +64,7 @@ func (s *NoteServer) GetNoteByIDHandler(w http.ResponseWriter, r *http.Request) 
 func (s *NoteServer) CreateNoteHandler(w http.ResponseWriter, r *http.Request) {
 	userID := common.GetUserIDFromContext(r.Context())
 	if userID == 0 {
+		s.logger.Info("unauthorised access to CreateNote", "userId", userID)
 		common.RespondWithError(w, http.StatusUnauthorized, "Unauthorized")
 		return
 	}
@@ -79,11 +84,13 @@ func (s *NoteServer) CreateNoteHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	s.logger.Info("created notes successfully", "note", note, "userId", userID)
 	common.RespondWithJSON(w, http.StatusCreated, note)
 }
 func (s *NoteServer) UpdateNoteHandler(w http.ResponseWriter, r *http.Request) {
 	userID := common.GetUserIDFromContext(r.Context())
 	if userID == 0 {
+		s.logger.Info("unauthorised access to UpdateNote", "userId", userID)
 		common.RespondWithError(w, http.StatusUnauthorized, "Unauthorized")
 		return
 	}
@@ -99,7 +106,8 @@ func (s *NoteServer) UpdateNoteHandler(w http.ResponseWriter, r *http.Request) {
 	var updatedNote dbmodels.Note
 	decoder := json.NewDecoder(r.Body)
 	if err := decoder.Decode(&updatedNote); err != nil {
-		log.Println("unable to update note:", err.Error())
+		s.logger.Debug("unable to fetch note to update",
+			"userId", userID, "noteId", noteID, "err", err.Error(), "method", "PUT")
 		common.RespondWithError(w, http.StatusBadRequest, "Invalid request payload")
 		return
 	}
@@ -109,7 +117,8 @@ func (s *NoteServer) UpdateNoteHandler(w http.ResponseWriter, r *http.Request) {
 	var existingNote dbmodels.Note
 	result := s.db.Where("id = ? AND user_id = ?", noteID, userID).First(&existingNote)
 	if result.Error != nil {
-		log.Println("unable to fetch note:", err.Error())
+		s.logger.Debug("unable to fetch note to update",
+			"userId", userID, "noteId", noteID, "err", err.Error(), "method", "PUT")
 		common.RespondWithError(w, http.StatusNotFound, "Note not found")
 		return
 	}
@@ -118,11 +127,13 @@ func (s *NoteServer) UpdateNoteHandler(w http.ResponseWriter, r *http.Request) {
 	existingNote.Title = updatedNote.Title
 	existingNote.Content = updatedNote.Content
 	if err := s.db.Save(&existingNote).Error; err != nil {
-		log.Println("unable to update note:", err.Error())
+		s.logger.Debug("unable to update note",
+			"userId", userID, "noteId", noteID, "err", err.Error(), "method", "PUT")
 		common.RespondWithError(w, http.StatusBadRequest, "Failed to update note")
 		return
 	}
 
+	s.logger.Info("updated notes successfully", "note", updatedNote, "userId", userID)
 	common.RespondWithJSON(w, http.StatusOK, existingNote)
 }
 

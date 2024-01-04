@@ -3,7 +3,6 @@ package auth
 import (
 	"context"
 	"encoding/json"
-	"log"
 	"net/http"
 	"time"
 
@@ -19,7 +18,7 @@ func (s *AuthServer) SignupHandler(w http.ResponseWriter, r *http.Request) {
 	var user dbmodels.User
 	decoder := json.NewDecoder(r.Body)
 	if err := decoder.Decode(&user); err != nil {
-		log.Println("unable to decode req:", err.Error())
+		s.logger.Debug("unable to decode req", err, err.Error())
 		common.RespondWithError(w, http.StatusBadRequest, "Invalid request payload")
 		return
 	}
@@ -27,7 +26,7 @@ func (s *AuthServer) SignupHandler(w http.ResponseWriter, r *http.Request) {
 
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
 	if err != nil {
-		log.Println("unable to generate hash for password:", err.Error())
+		s.logger.Debug("unable to generate hash for password", err, err.Error())
 		common.RespondWithError(w, http.StatusInternalServerError, "Error hashing password")
 		return
 	}
@@ -47,29 +46,30 @@ func (s *AuthServer) LoginHandler(w http.ResponseWriter, r *http.Request) {
 
 	decoder := json.NewDecoder(r.Body)
 	if err := decoder.Decode(&credentials); err != nil {
+		s.logger.Debug("invalid request payload", err, err.Error())
 		common.RespondWithError(w, http.StatusBadRequest, "Invalid request payload")
 		return
 	}
 	defer r.Body.Close()
 
 	var user dbmodels.User
-	result := s.db.Where("username = ?", credentials.Username).First(&user)
-	if result.Error != nil {
-		log.Println("unable to fetch user:", result.Error.Error())
+	err := s.db.Where("username = ?", credentials.Username).First(&user).Error
+	if err != nil {
+		s.logger.Debug("unable to fetch user", err, err.Error())
 		common.RespondWithError(w, http.StatusUnauthorized, "Username not exist")
 		return
 	}
 
-	err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(credentials.Password))
+	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(credentials.Password))
 	if err != nil {
-		log.Println("unabel to compate hash and password:", err.Error())
+		s.logger.Debug("unable to compare hash and password", err, err.Error())
 		common.RespondWithError(w, http.StatusUnauthorized, "Incorrect password")
 		return
 	}
 
 	token, err := generateJWTToken(user.ID)
 	if err != nil {
-		log.Println("unable to generate JWT Token:", err.Error())
+		s.logger.Debug("unable to generate JWT Token", err, err.Error())
 		common.RespondWithError(w, http.StatusInternalServerError, "Error generating JWT token")
 		return
 	}
@@ -88,7 +88,7 @@ func generateJWTToken(userID uint) (string, error) {
 }
 
 // Middleware to authenticate requests using JWT token
-func AuthenticateMiddleware(next http.Handler) http.Handler {
+func (s *AuthServer) AuthenticateMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		tokenString := r.Header.Get("Authorization")
 		if tokenString == "" {
@@ -100,7 +100,7 @@ func AuthenticateMiddleware(next http.Handler) http.Handler {
 			return JWTSecret, nil
 		})
 		if err != nil || !token.Valid {
-			log.Println("user not authorised:", err.Error())
+			s.logger.Debug("user not authorised", err, err.Error())
 			common.RespondWithError(w, http.StatusUnauthorized, "Unauthorized")
 			return
 		}

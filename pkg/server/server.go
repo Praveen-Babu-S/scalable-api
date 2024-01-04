@@ -15,23 +15,29 @@ import (
 
 func StartServer(serverConfig config.ServerConfig) {
 
+	// Initialise logger
+	logger := serverConfig.Logger
+
 	err := validateServerConfig(serverConfig)
 
 	if err != nil {
+		logger.Debug("invalid serverConfig", "err", err.Error())
 		log.Fatalf("Invalid config:%s", err.Error())
 	}
 
-	db := connect.DBConnectionClient(serverConfig.PostgresConfig)
+	db := connect.DBConnectionClient(serverConfig.PostgresConfig, logger)
 
 	// Run one time migrations to create required schema
-	migrations.RunMigrations(db)
+	migrations.RunMigrations(db, logger)
 
 	// Initialise handlers
-	authServer := auth.NewAuthImplementor(db)
-	noteServer := note.NewNoteImplementor(db)
+	authServer := auth.NewAuthImplementor(db, logger)
+	noteServer := note.NewNoteImplementor(db, logger)
 	shareServer := share.NewShareImplementor(db)
 	searchServer := search.NewSearchImplementor(db)
 
 	// Start api handler
 	http.StartApiHandler(serverConfig.ServerPort, authServer, noteServer, shareServer, searchServer)
+
+	logger.Info("----- Server Running -----")
 }

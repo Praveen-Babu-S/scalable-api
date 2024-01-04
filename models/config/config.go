@@ -1,5 +1,7 @@
 package config
 
+import "log/slog"
+
 type PostgresConfig struct {
 	Host       string
 	Port       string
@@ -11,4 +13,5 @@ type PostgresConfig struct {
 type ServerConfig struct {
 	ServerPort     string
 	PostgresConfig PostgresConfig
+	Logger         *slog.Logger
 }
